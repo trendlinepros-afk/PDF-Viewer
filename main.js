@@ -4,6 +4,7 @@
 const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { execFile } = require('child_process');
 
 let win = null;
 let pendingFile = null;
@@ -78,6 +79,74 @@ ipcMain.handle('check-updates', () => {
   }
   return updateCheckInFlight;
 });
+
+/* ==================== Old-MSI cleanup ====================
+   The auto-updater installs the NSIS (exe) build and cannot remove a
+   previous MSI install, which stays behind as a second entry in Windows
+   "Apps". Detect any older MSI copy of this product and offer removal. */
+function versionsMatch(a, b) {
+  const norm = (v) => String(v || '').split('.').slice(0, 3)
+    .map((n) => parseInt(n, 10) || 0).join('.');
+  return norm(a) === norm(b);
+}
+
+function cleanupStatePath() {
+  return path.join(app.getPath('userData'), 'cleanup.json');
+}
+function readCleanupState() {
+  try { return JSON.parse(fs.readFileSync(cleanupStatePath(), 'utf8')); }
+  catch (_) { return {}; }
+}
+function writeCleanupState(s) {
+  try { fs.writeFileSync(cleanupStatePath(), JSON.stringify(s)); } catch (_) {}
+}
+
+async function checkLeftoverMsiInstall() {
+  if (process.platform !== 'win32' || !app.isPackaged || !win) return;
+  const script =
+    "Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*'," +
+    "'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*'," +
+    "'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*' -ErrorAction SilentlyContinue | " +
+    "Where-Object { $_.DisplayName -like 'PDF Viewer Pro*' -and $_.WindowsInstaller -eq 1 } | " +
+    "Select-Object PSChildName, DisplayName, DisplayVersion | ConvertTo-Json -Compress";
+  let out;
+  try {
+    out = await new Promise((resolve, reject) => {
+      execFile('powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', script],
+        { timeout: 15000, windowsHide: true },
+        (err, stdout) => (err ? reject(err) : resolve(stdout)));
+    });
+  } catch (_) { return; }
+
+  let entries;
+  try { entries = JSON.parse((out || '').trim() || '[]'); } catch (_) { return; }
+  if (!Array.isArray(entries)) entries = [entries];
+
+  const declined = readCleanupState().declined || [];
+  for (const e of entries) {
+    // only ever touch an MSI entry of THIS product that is an older version
+    if (!e || !e.PSChildName || versionsMatch(e.DisplayVersion, app.getVersion())) continue;
+    if (declined.includes(e.PSChildName)) continue;
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'question',
+      title: 'Remove old version?',
+      message: `An older copy of PDF Viewer Pro (${e.DisplayVersion}) is still installed.`,
+      detail: 'It was left behind by the previous installer and is no longer needed. ' +
+        'Removing it will not affect your documents, annotations, or settings. ' +
+        'Windows may ask for confirmation.',
+      buttons: ['Remove old version', 'Keep it'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) {
+      execFile('msiexec.exe', ['/x', e.PSChildName, '/passive'],
+        { windowsHide: true }, () => {});
+    } else {
+      writeCleanupState({ declined: [...declined, e.PSChildName] });
+    }
+  }
+}
 
 function fileFromArgv(argv) {
   return argv.slice(1).find((a) => /\.pdf$/i.test(a) && fs.existsSync(a)) || null;
@@ -221,6 +290,7 @@ function createWindow() {
 app.whenReady().then(() => {
   buildMenu();
   createWindow();
+  setTimeout(() => { checkLeftoverMsiInstall().catch(() => {}); }, 3000);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
