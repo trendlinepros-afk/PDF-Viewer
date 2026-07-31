@@ -1,7 +1,7 @@
 /* PDF Viewer Pro — full-featured PDF viewer built on Mozilla PDF.js */
 'use strict';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const REPO = 'trendlinepros-afk/PDF-Viewer';
 const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
@@ -1186,6 +1186,25 @@ async function fetchLatestVersion(signal) {
 }
 
 async function checkForUpdates() {
+  // Desktop app: the native auto-updater downloads the update and offers a
+  // "Close and reopen now" / "I'll do it on my own" choice via system dialogs.
+  if (window.electronAPI && window.electronAPI.checkUpdates) {
+    const btn = $('btnUpdate');
+    btn.classList.add('checking');
+    let result = null;
+    try {
+      result = await window.electronAPI.checkUpdates();
+    } catch (_) {}
+    btn.classList.remove('checking');
+    if (result && (result.status === 'uptodate' || result.status === 'downloaded')) {
+      return;
+    }
+    // 'unpackaged' or updater error → fall back to the web-based check below
+  }
+  await checkForUpdatesWeb();
+}
+
+async function checkForUpdatesWeb() {
   const btn = $('btnUpdate');
   const msg = $('updateMessage');
   btn.classList.add('checking');

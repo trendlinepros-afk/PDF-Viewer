@@ -8,8 +8,9 @@ no subscription, no account.
 
 1. Go to the [latest release](https://github.com/trendlinepros-afk/PDF-Viewer/releases/latest).
 2. Download either installer:
-   - **`PDF Viewer Pro-Setup-<version>.exe`** — standard installer (recommended)
-   - **`PDF Viewer Pro-<version>.msi`** — MSI package (for enterprise / GPO deployment)
+   - **`PDF-Viewer-Pro-Setup-<version>.exe`** — standard installer (recommended;
+     supports in-app auto-update)
+   - **`PDF-Viewer-Pro-<version>.msi`** — MSI package (for enterprise / GPO deployment)
 3. Run it. The app registers itself as a viewer for `.pdf` files, so you can
    double-click any PDF or right-click → *Open with → PDF Viewer Pro*.
 
@@ -69,9 +70,15 @@ npm run dist       # build Windows EXE + MSI installers into dist/ (run on Windo
 ```
 
 Release flow: bump `version` in `package.json`, `js/app.js` (`APP_VERSION`),
-and `version.json`, then push a matching tag (e.g. `v1.1.0`). GitHub Actions
-builds the installers on a Windows runner and attaches them to the release —
-which is exactly what the in-app **Check for updates** button looks for.
+and `version.json`, then push a matching tag (e.g. `v1.1.0`) or run the
+*Build Windows Installers* workflow manually. GitHub Actions builds the
+installers on a Windows runner and attaches them (plus the `latest.yml`
+auto-update manifest) to the release.
+
+**Check for updates** (lower-left button or *Help* menu) uses that manifest:
+the installed app downloads the new version in the background and then asks
+whether to **close and reopen now** to finish installing, or wait — in which
+case it installs automatically the next time you quit the app.
 
 The viewer core is plain HTML/CSS/JS, so it also runs in a browser for quick
 development: `python3 -m http.server 8080` and open `http://localhost:8080`.

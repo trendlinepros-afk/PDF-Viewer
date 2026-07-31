@@ -1,7 +1,7 @@
 {
   "name": "pdf-viewer-pro",
   "productName": "PDF Viewer Pro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A free, full-featured PDF viewer — an Adobe premium replacement",
   "author": "trendlinepros-afk",
   "license": "MIT",
@@ -9,6 +9,9 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^31.7.7",
@@ -26,10 +29,15 @@
       "lib/**",
       "version.json"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "trendlinepros-afk",
+      "repo": "PDF-Viewer"
+    },
     "win": {
       "target": ["nsis", "msi"],
       "icon": "build/icon.png",
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "artifactName": "PDF-Viewer-Pro-${version}-${arch}.${ext}",
       "fileAssociations": [
         {
           "ext": "pdf",
@@ -41,11 +49,11 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "artifactName": "PDF-Viewer-Pro-Setup-${version}.${ext}",
       "shortcutName": "PDF Viewer Pro"
     },
     "msi": {
-      "artifactName": "${productName}-${version}.${ext}"
+      "artifactName": "PDF-Viewer-Pro-${version}.${ext}"
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "released": "2026-07-31",
-  "notes": "Initial release: full-featured PDF viewer with annotations, search, print, themes, and update checking."
+  "notes": "Auto-update support: the app downloads new versions and offers to close and reopen to install."
 }

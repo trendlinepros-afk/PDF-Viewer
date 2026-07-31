@@ -1,12 +1,83 @@
 /* PDF Viewer Pro — Electron main process */
 'use strict';
 
-const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let win = null;
 let pendingFile = null;
+
+/* ==================== Auto-update ==================== */
+function isNewer(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d > 0;
+  }
+  return false;
+}
+
+async function runUpdateCheck() {
+  // in dev / unpackaged runs the renderer falls back to its web-based check
+  if (!app.isPackaged) return { status: 'unpackaged' };
+
+  let autoUpdater;
+  try {
+    ({ autoUpdater } = require('electron-updater'));
+  } catch (err) {
+    return { status: 'error', message: String(err.message || err) };
+  }
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  try {
+    const check = await autoUpdater.checkForUpdates();
+    const latest = check && check.updateInfo && check.updateInfo.version;
+
+    if (!latest || !isNewer(latest, app.getVersion())) {
+      await dialog.showMessageBox(win, {
+        type: 'info',
+        title: 'Check for Updates',
+        message: "You're up to date!",
+        detail: `PDF Viewer Pro ${app.getVersion()} is the latest version.`,
+      });
+      return { status: 'uptodate', version: app.getVersion() };
+    }
+
+    // update found — autoDownload is on, so wait for the download to finish
+    const info = await new Promise((resolve, reject) => {
+      const onDone = (i) => { autoUpdater.removeListener('error', onErr); resolve(i); };
+      const onErr = (e) => { autoUpdater.removeListener('update-downloaded', onDone); reject(e); };
+      autoUpdater.once('update-downloaded', onDone);
+      autoUpdater.once('error', onErr);
+    });
+
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'info',
+      title: 'Update ready to install',
+      message: `Version ${info.version} has been downloaded.`,
+      detail: 'Close and reopen the app now to finish installing the update, ' +
+        'or keep working — it will install automatically the next time you quit.',
+      buttons: ['Close and reopen now', "I'll do it on my own"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) setImmediate(() => autoUpdater.quitAndInstall());
+    return { status: 'downloaded', version: info.version };
+  } catch (err) {
+    return { status: 'error', message: String((err && err.message) || err) };
+  }
+}
+
+let updateCheckInFlight = null;
+ipcMain.handle('check-updates', () => {
+  if (!updateCheckInFlight) {
+    updateCheckInFlight = runUpdateCheck().finally(() => { updateCheckInFlight = null; });
+  }
+  return updateCheckInFlight;
+});
 
 function fileFromArgv(argv) {
   return argv.slice(1).find((a) => /\.pdf$/i.test(a) && fs.existsSync(a)) || null;
