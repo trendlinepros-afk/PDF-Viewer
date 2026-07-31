@@ -96,6 +96,13 @@ body {
 .tb-btn svg { width: 22px; height: 22px; }
 .tb-btn.small { width: 30px; height: 30px; }
 .tb-btn.small svg { width: 16px; height: 16px; }
+.tb-btn.text-btn {
+  width: auto;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* theme toggle shows only the icon for the mode you'd switch to */
 :root[data-theme="light"] .icon-sun { display: none; }

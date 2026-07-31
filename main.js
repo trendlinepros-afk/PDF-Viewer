@@ -216,7 +216,7 @@ function buildMenu() {
     {
       label: '&Tools',
       submenu: [
-        { label: 'AI Summary…', click: () => menuSend('ai-summary') },
+        { label: 'AI Review…', click: () => menuSend('ai-summary') },
         { label: 'Settings…', click: () => menuSend('settings') },
       ],
     },

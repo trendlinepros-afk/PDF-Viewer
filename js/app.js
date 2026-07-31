@@ -1,7 +1,7 @@
 /* PDF Viewer Pro — full-featured PDF viewer built on Mozilla PDF.js */
 'use strict';
 
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 const REPO = 'trendlinepros-afk/PDF-Viewer';
 const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
