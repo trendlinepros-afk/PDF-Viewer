@@ -122,6 +122,7 @@
       <button class="tb-btn" id="btnPresent" title="Presentation mode (F5)">
         <svg viewBox="0 0 24 24"><path d="M4 4h16v12H4zM12 16v4m-4 0h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
       </button>
+      <button class="tb-btn text-btn" id="btnTools" title="Pro tools: organize, edit, redact, sign, OCR, forms, convert…">Tools</button>
       <button class="tb-btn text-btn" id="btnAiSummary" title="AI Review (Gemini)">AI Review</button>
       <button class="tb-btn" id="btnSettings" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -250,11 +251,111 @@
     </div>
   </dialog>
 
+  <!-- ==================== Pro tools dialogs ==================== -->
+  <dialog id="toolsDialog" class="wide">
+    <h2>Tools</h2>
+    <div class="tools-grid">
+      <button data-action="save-edits"><b>Save with Edits</b><span>Flatten highlights, drawings, text, images &amp; signatures into a new PDF</span></button>
+      <button data-action="organize"><b>Organize Pages</b><span>Reorder, rotate, delete, extract, merge</span></button>
+      <button data-action="add-text"><b>Add Text</b><span>Place new text anywhere on a page</span></button>
+      <button data-action="whiteout"><b>Edit / Whiteout</b><span>Cover existing content and retype it</span></button>
+      <button data-action="add-image"><b>Add Image</b><span>Stamp a PNG or JPEG onto a page</span></button>
+      <button data-action="sign"><b>Fill &amp; Sign</b><span>Draw or type a signature and place it</span></button>
+      <button data-action="redact"><b>Mark for Redaction</b><span>Drag boxes over sensitive content</span></button>
+      <button data-action="apply-redactions"><b>Apply Redactions</b><span>Permanently remove marked content</span></button>
+      <button data-action="ocr"><b>OCR (Text Recognition)</b><span>Make scanned pages searchable</span></button>
+      <button data-action="forms"><b>Fill Form Fields</b><span>Complete and save fillable PDF forms</span></button>
+      <button data-action="compare"><b>Compare Documents</b><span>Show text differences vs another PDF</span></button>
+      <button data-action="convert"><b>Convert &amp; Export</b><span>Word, text, images, merge, create PDF</span></button>
+      <button data-action="protect"><b>Protect</b><span>Password-encrypt a copy of this PDF</span></button>
+      <button data-action="read-aloud"><b>Read Aloud</b><span>Speak the current page's text</span></button>
+    </div>
+    <div class="dialog-actions"><button class="primary-btn" id="btnToolsClose">Close</button></div>
+  </dialog>
+
+  <dialog id="organizeDialog" class="wide">
+    <h2>Organize Pages</h2>
+    <p class="settings-hint">Drag cards to reorder. ⟳ rotates, ✕ marks for deletion, checkboxes select pages to extract.</p>
+    <div class="org-grid" id="orgGrid"></div>
+    <div class="dialog-actions">
+      <button class="ghost-btn" id="btnOrgInsert">Insert PDF…</button>
+      <button class="ghost-btn" id="btnOrgExtract">Extract Selected</button>
+      <button class="ghost-btn" id="btnOrgClose">Cancel</button>
+      <button class="primary-btn" id="btnOrgApply">Apply Changes</button>
+    </div>
+  </dialog>
+
+  <dialog id="signDialog">
+    <h2>Fill &amp; Sign</h2>
+    <canvas id="signCanvas" width="560" height="180"></canvas>
+    <div class="sign-row">
+      <input type="text" id="signTypeInput" placeholder="…or type your name">
+      <button class="ghost-btn" id="btnSignType">Use Typed</button>
+      <button class="ghost-btn" id="btnSignClear">Clear</button>
+    </div>
+    <div class="dialog-actions">
+      <button class="ghost-btn" id="btnSignCancel">Cancel</button>
+      <button class="primary-btn" id="btnSignPlace">Place Signature</button>
+    </div>
+  </dialog>
+
+  <dialog id="ocrDialog">
+    <h2>OCR — Text Recognition</h2>
+    <p id="ocrStatus">Preparing…</p>
+    <div class="dialog-actions"><button class="primary-btn" id="btnOcrClose">Close</button></div>
+  </dialog>
+
+  <dialog id="formsDialog" class="wide">
+    <h2>Fill Form Fields</h2>
+    <div id="formsList" class="forms-list"></div>
+    <div class="dialog-actions">
+      <button class="ghost-btn" id="btnFormsClose">Cancel</button>
+      <button class="primary-btn" id="btnFormsSave">Apply &amp; Reload</button>
+    </div>
+  </dialog>
+
+  <dialog id="compareDialog" class="wide">
+    <h2>Compare Documents</h2>
+    <p id="compareSummary"></p>
+    <div id="compareBody" class="cmp-body"></div>
+    <div class="dialog-actions"><button class="primary-btn" id="btnCompareClose">Close</button></div>
+  </dialog>
+
+  <dialog id="convertDialog">
+    <h2>Convert &amp; Export</h2>
+    <div class="tools-grid two-col">
+      <button data-convert="to-word"><b>PDF → Word</b><span>Export text to .docx</span></button>
+      <button data-convert="to-text"><b>PDF → Text</b><span>Export plain .txt</span></button>
+      <button data-convert="to-images"><b>PDF → Images</b><span>PNG per page (.zip)</span></button>
+      <button data-convert="from-images"><b>Images → PDF</b><span>Combine PNG/JPEG files</span></button>
+      <button data-convert="from-word"><b>Word → PDF</b><span>Convert .docx (text layout)</span></button>
+      <button data-convert="merge"><b>Merge PDFs</b><span>Combine multiple files</span></button>
+    </div>
+    <div class="dialog-actions"><button class="primary-btn" id="btnConvertClose">Close</button></div>
+  </dialog>
+
+  <dialog id="protectDialog">
+    <h2>Protect with Password</h2>
+    <p class="settings-hint">Downloads an encrypted copy that requires this password to open.</p>
+    <div class="sign-row"><input type="password" id="protectPass" placeholder="Password" autocomplete="new-password"></div>
+    <div class="sign-row"><input type="password" id="protectPass2" placeholder="Confirm password" autocomplete="new-password"></div>
+    <div class="dialog-actions">
+      <button class="ghost-btn" id="btnProtectClose">Cancel</button>
+      <button class="primary-btn" id="btnProtectApply">Encrypt &amp; Download</button>
+    </div>
+  </dialog>
+
   <!-- Note popup template lives in JS -->
   <input type="file" id="fileInput" accept="application/pdf,.pdf" hidden>
   <div class="toast-container" id="toastContainer"></div>
   <div class="print-container" id="printContainer"></div>
 
+  <script src="lib/pdf-lib.min.js"></script>
+  <script src="lib/jszip.min.js"></script>
+  <script src="lib/diff.min.js"></script>
+  <script src="lib/mammoth.browser.min.js"></script>
+  <script src="lib/tesseract/tesseract.min.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/protools.js"></script>
 </body>
 </html>

@@ -50,8 +50,22 @@ Installers are built automatically by GitHub Actions
 - **Document properties** dialog: title, author, creation date, producer,
   PDF version, page count, file size (`Ctrl+I`)
 
+### Pro tools (the Acrobat Pro feature set — free)
+- **Organize Pages** — reorder (drag & drop), rotate, delete, extract pages, split, and merge PDFs
+- **Edit** — add text anywhere, whiteout-and-retype existing content, stamp images
+- **Save with Edits** — flattens highlights, drawings, text, whiteouts, images, and signatures into a real PDF
+- **Redaction** — mark areas, then permanently remove them (affected pages are rasterized so the content underneath is truly gone)
+- **Fill & Sign** — draw or type a signature and place it on any page
+- **OCR** — offline text recognition (Tesseract) turns scanned pages into a searchable PDF plus a text transcript
+- **Form filling** — complete and save fillable (AcroForm) PDFs
+- **Compare** — word-level text diff between two PDFs, per page
+- **Convert & Export** — PDF→Word, PDF→text, PDF→images (zip), images→PDF, Word→PDF (text layout), merge PDFs
+- **Protect** — AES password-encrypt a copy of the document
+- **Read Aloud** — speaks the current page via the system voice
+- Printing includes all edits and annotations
+
 ### AI
-- **AI Summary** — one click summarizes the open document using Google Gemini
+- **AI Review** — one click summarizes the open document using Google Gemini
   (overview, key points, action items). Bring your own free API key from
   aistudio.google.com/apikey.
 - **Settings menu** (top right) manages theme, AI model, and the API key —

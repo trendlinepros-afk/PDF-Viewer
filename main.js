@@ -80,6 +80,37 @@ ipcMain.handle('check-updates', () => {
   return updateCheckInFlight;
 });
 
+/* ==================== OCR (main process) ====================
+   The renderer cannot fetch local files over file://, so OCR runs here in
+   Node, where tesseract.js loads its core and the bundled language data
+   directly from disk. */
+let ocrWorkerPromise = null;
+
+ipcMain.handle('ocr-image', async (_e, dataUrl) => {
+  try {
+    if (!ocrWorkerPromise) {
+      const { createWorker } = require('tesseract.js');
+      ocrWorkerPromise = createWorker('eng', 1, {
+        langPath: path.join(__dirname, 'lib', 'tesseract'),
+        gzip: true,
+        cachePath: app.getPath('userData'),
+      });
+    }
+    const worker = await ocrWorkerPromise;
+    const base64 = String(dataUrl).split(',')[1] || '';
+    const { data } = await worker.recognize(Buffer.from(base64, 'base64'));
+    return {
+      text: data.text || '',
+      words: (data.words || []).map((w) => ({
+        text: w.text, bbox: w.bbox, confidence: w.confidence,
+      })),
+    };
+  } catch (err) {
+    ocrWorkerPromise = null;
+    return { error: String((err && err.message) || err) };
+  }
+});
+
 /* ==================== Old-MSI cleanup ====================
    The auto-updater installs the NSIS (exe) build and cannot remove a
    previous MSI install, which stays behind as a second entry in Windows
@@ -216,6 +247,17 @@ function buildMenu() {
     {
       label: '&Tools',
       submenu: [
+        { label: 'All Tools…', click: () => menuSend('pro-tools') },
+        { type: 'separator' },
+        { label: 'Save with Edits…', click: () => menuSend('save-edits') },
+        { label: 'Organize Pages…', click: () => menuSend('organize') },
+        { label: 'Fill && Sign…', click: () => menuSend('sign') },
+        { label: 'OCR — Text Recognition…', click: () => menuSend('ocr') },
+        { label: 'Fill Form Fields…', click: () => menuSend('forms') },
+        { label: 'Compare Documents…', click: () => menuSend('compare') },
+        { label: 'Convert && Export…', click: () => menuSend('convert') },
+        { label: 'Protect with Password…', click: () => menuSend('protect') },
+        { type: 'separator' },
         { label: 'AI Review…', click: () => menuSend('ai-summary') },
         { label: 'Settings…', click: () => menuSend('settings') },
       ],

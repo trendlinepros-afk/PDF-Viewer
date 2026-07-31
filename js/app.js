@@ -1,7 +1,7 @@
 /* PDF Viewer Pro — full-featured PDF viewer built on Mozilla PDF.js */
 'use strict';
 
-const APP_VERSION = '1.1.3';
+const APP_VERSION = '1.2.0';
 const REPO = 'trendlinepros-afk/PDF-Viewer';
 const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
@@ -910,6 +910,8 @@ function renderAnnotationLayer(wrap, pageNum) {
       poly.appendChild(title);
       poly.addEventListener('dblclick', () => deleteAnnotation(a.id));
       svg.appendChild(poly);
+    } else if (typeof renderProAnnotation === 'function' && a.type !== 'note') {
+      renderProAnnotation(layer, wrap, a);
     } else if (a.type === 'note') {
       const [vx, vy] = normToView(a.x, a.y, state.rotation);
       const icon = document.createElement('div');
@@ -991,7 +993,11 @@ function renderAnnotList() {
     panel.innerHTML = '<p class="empty-msg">No comments yet.</p>';
     return;
   }
-  const labels = { highlight: 'Highlight', draw: 'Drawing', note: 'Note' };
+  const labels = {
+    highlight: 'Highlight', draw: 'Drawing', note: 'Note',
+    text: 'Text', whiteout: 'Whiteout', image: 'Image',
+    redact: 'Redaction mark', signature: 'Signature',
+  };
   const sorted = [...state.annotations].sort((a, b) =>
     a.page - b.page || a.created - b.created);
   for (const a of sorted) {
@@ -1004,7 +1010,7 @@ function renderAnnotList() {
     body.className = 'annot-body';
     const meta = document.createElement('div');
     meta.className = 'annot-meta';
-    meta.textContent = `${labels[a.type]} — page ${a.page}`;
+    meta.textContent = `${labels[a.type] || a.type} — page ${a.page}`;
     body.appendChild(meta);
     if (a.type === 'note') {
       const text = document.createElement('div');
@@ -1103,7 +1109,13 @@ async function printPdf() {
       const canvas = document.createElement('canvas');
       canvas.width = Math.floor(vp.width);
       canvas.height = Math.floor(vp.height);
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      const cctx = canvas.getContext('2d');
+      await page.render({ canvasContext: cctx, viewport: vp }).promise;
+      // include edits and annotations in the printed output
+      if (typeof drawAnnotsForPrint === 'function') {
+        drawAnnotsForPrint(cctx, n, canvas.width, canvas.height);
+        await drawImageAnnotsForPrint(cctx, n, canvas.width, canvas.height);
+      }
       const img = document.createElement('img');
       img.src = canvas.toDataURL('image/png');
       container.appendChild(img);
@@ -1327,6 +1339,7 @@ window.addEventListener('keydown', (e) => {
     case '?': $('shortcutsDialog').showModal(); break;
     case 'Escape':
       if (searchWrap.classList.contains('open')) toggleSearch();
+      else if (!['select', 'hand'].includes(state.tool)) setTool('select');
       break;
   }
 });
@@ -1481,6 +1494,10 @@ if (window.electronAPI) {
       case 'redo': redoAnnotation(); break;
       case 'ai-summary': generateAiSummary(); break;
       case 'settings': openSettings(); break;
+      case 'pro-tools': $('toolsDialog').showModal(); break;
+      case 'save-edits': case 'organize': case 'ocr': case 'forms':
+      case 'compare': case 'convert': case 'protect': case 'sign':
+        runToolAction(action); break;
     }
   });
 }

@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOpenFile: (cb) => ipcRenderer.on('open-file', (_e, payload) => cb(payload)),
   onMenu: (cb) => ipcRenderer.on('menu', (_e, action) => cb(action)),
   checkUpdates: () => ipcRenderer.invoke('check-updates'),
+  ocrImage: (dataUrl) => ipcRenderer.invoke('ocr-image', dataUrl),
 });
