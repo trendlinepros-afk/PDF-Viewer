@@ -1,8 +1,20 @@
 # PDF Viewer Pro
 
-A free, full-featured, browser-based replacement for the premium Adobe PDF viewer.
-Built on [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) — no installation,
-no subscription, no account. Just open `index.html`.
+A free, full-featured **Windows desktop application** that replaces the premium
+Adobe PDF viewer. Built with Electron and [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) —
+no subscription, no account.
+
+## Installation (Windows)
+
+1. Go to the [latest release](https://github.com/trendlinepros-afk/PDF-Viewer/releases/latest).
+2. Download either installer:
+   - **`PDF Viewer Pro-Setup-<version>.exe`** — standard installer (recommended)
+   - **`PDF Viewer Pro-<version>.msi`** — MSI package (for enterprise / GPO deployment)
+3. Run it. The app registers itself as a viewer for `.pdf` files, so you can
+   double-click any PDF or right-click → *Open with → PDF Viewer Pro*.
+
+Installers are built automatically by GitHub Actions
+(`.github/workflows/build-windows.yml`) whenever a `v*` tag is pushed.
 
 ## Features
 
@@ -42,20 +54,27 @@ no subscription, no account. Just open `index.html`.
 - Keyboard-shortcut reference (press `?`)
 - Responsive Adobe-style toolbar, sidebar, and status bar
 
-## Getting started
+### Desktop extras
+- Native Windows app with **EXE and MSI installers**
+- `.pdf` **file association** — double-click PDFs to open them
+- Native menu bar (File / Edit / View / Help) with standard accelerators
+- Single-instance app: opening another PDF reuses the running window
 
-Serve the folder with any static file server and open it in a browser:
+## Developing
 
 ```bash
-# any of these work
-python3 -m http.server 8080
-npx serve .
+npm install        # installs Electron + electron-builder
+npm start          # run the desktop app locally
+npm run dist       # build Windows EXE + MSI installers into dist/ (run on Windows)
 ```
 
-Then browse to `http://localhost:8080`.
+Release flow: bump `version` in `package.json`, `js/app.js` (`APP_VERSION`),
+and `version.json`, then push a matching tag (e.g. `v1.1.0`). GitHub Actions
+builds the installers on a Windows runner and attaches them to the release —
+which is exactly what the in-app **Check for updates** button looks for.
 
-> Opening `index.html` directly from disk (`file://`) also works in most
-> browsers, but a local server is recommended so the update checker can run.
+The viewer core is plain HTML/CSS/JS, so it also runs in a browser for quick
+development: `python3 -m http.server 8080` and open `http://localhost:8080`.
 
 ## Keyboard shortcuts
 

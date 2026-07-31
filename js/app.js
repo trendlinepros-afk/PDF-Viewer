@@ -2,7 +2,10 @@
 'use strict';
 
 const APP_VERSION = '1.0.0';
-const UPDATE_URL = 'https://raw.githubusercontent.com/trendlinepros-afk/PDF-Viewer/main/version.json';
+const REPO = 'trendlinepros-afk/PDF-Viewer';
+const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`;
+const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
+const VERSION_URL = `https://raw.githubusercontent.com/${REPO}/main/version.json`;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 
@@ -1162,25 +1165,45 @@ function compareVersions(a, b) {
   return 0;
 }
 
+/* newest published version: GitHub release tag first, version.json as fallback */
+async function fetchLatestVersion(signal) {
+  try {
+    const res = await fetch(RELEASES_API, { cache: 'no-store', signal });
+    if (res.ok) {
+      const data = await res.json();
+      const v = String(data.tag_name || data.name || '').replace(/^v/i, '').trim();
+      if (v) return v;
+    }
+  } catch (err) {
+    if (signal.aborted) throw err;
+  }
+  const res = await fetch(VERSION_URL + '?t=' + Date.now(), { cache: 'no-store', signal });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const v = String(data.version || '').trim();
+  if (!v) throw new Error('Malformed version manifest');
+  return v;
+}
+
 async function checkForUpdates() {
   const btn = $('btnUpdate');
   const msg = $('updateMessage');
   btn.classList.add('checking');
   msg.textContent = 'Checking for updates…';
   $('updateDialog').showModal();
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(new Error('timed out')), 10000);
   try {
-    const abort = new AbortController();
-    const timer = setTimeout(() => abort.abort(new Error('timed out')), 8000);
-    const res = await fetch(UPDATE_URL + '?t=' + Date.now(),
-      { cache: 'no-store', signal: abort.signal }).finally(() => clearTimeout(timer));
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    const latest = String(data.version || '').trim();
-    if (!latest) throw new Error('Malformed version manifest');
+    const latest = await fetchLatestVersion(abort.signal);
     if (compareVersions(latest, APP_VERSION) > 0) {
       msg.textContent =
-        `A new version (v${latest}) is available — you are on v${APP_VERSION}. ` +
-        'Pull the latest changes from the repository to update.';
+        `A new version (v${latest}) is available — you are on v${APP_VERSION}. `;
+      const link = document.createElement('a');
+      link.href = RELEASES_PAGE;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Download the latest installer';
+      msg.appendChild(link);
     } else {
       msg.textContent = `You're up to date! v${APP_VERSION} is the latest version.`;
     }
@@ -1189,6 +1212,7 @@ async function checkForUpdates() {
       `Could not reach the update server (${err.message}). ` +
       `You are currently on v${APP_VERSION}. Please try again later.`;
   } finally {
+    clearTimeout(timer);
     btn.classList.remove('checking');
   }
 }
@@ -1241,3 +1265,31 @@ window.addEventListener('keydown', (e) => {
       break;
   }
 });
+
+/* ==================== Electron desktop integration ==================== */
+if (window.electronAPI) {
+  // files opened via Windows file association / "Open with" arrive from the main process
+  window.electronAPI.onOpenFile((payload) => {
+    const bytes = payload.data instanceof Uint8Array
+      ? payload.data
+      : new Uint8Array(payload.data);
+    loadDocument(bytes, payload.name, bytes.length)
+      .catch((err) => toast('Could not open file: ' + err.message, true));
+  });
+
+  window.electronAPI.onMenu((action) => {
+    switch (action) {
+      case 'open': fileInput.click(); break;
+      case 'save': downloadPdf(); break;
+      case 'print': printPdf(); break;
+      case 'properties': showProperties(); break;
+      case 'find': toggleSearch(true); break;
+      case 'zoom-in': zoomStep(1); break;
+      case 'zoom-out': zoomStep(-1); break;
+      case 'theme': $('btnTheme').click(); break;
+      case 'present': enterPresentation(); break;
+      case 'shortcuts': $('shortcutsDialog').showModal(); break;
+      case 'update': checkForUpdates(); break;
+    }
+  });
+}
