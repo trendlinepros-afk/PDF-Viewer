@@ -4,7 +4,7 @@
   --accent-hover: #1c7ed6;
   --danger: #c92a2a;
   --radius: 6px;
-  --toolbar-h: 92px;
+  --toolbar-h: 69px;
   --statusbar-h: 34px;
   --sidebar-w: 220px;
   font-size: 14px;
@@ -73,15 +73,15 @@ body {
 }
 
 .toolbar-group { display: flex; align-items: center; gap: 2px; }
-.toolbar-sep { width: 1px; height: 44px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
+.toolbar-sep { width: 1px; height: 34px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
 .toolbar-spacer { flex: 1; min-width: 8px; }
 
 .tb-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   border-radius: var(--radius);
@@ -93,9 +93,9 @@ body {
 .tb-btn:hover { background: var(--bg-hover); }
 .tb-btn.active { background: var(--bg-active); color: var(--accent); }
 .tb-btn:disabled { opacity: .4; cursor: default; background: transparent; }
-.tb-btn svg { width: 27px; height: 27px; }
-.tb-btn.small { width: 36px; height: 36px; }
-.tb-btn.small svg { width: 19px; height: 19px; }
+.tb-btn svg { width: 22px; height: 22px; }
+.tb-btn.small { width: 30px; height: 30px; }
+.tb-btn.small svg { width: 16px; height: 16px; }
 
 /* theme toggle shows only the icon for the mode you'd switch to */
 :root[data-theme="light"] .icon-sun { display: none; }
@@ -110,9 +110,9 @@ body {
 }
 
 #pageInput {
-  width: 64px;
-  height: 42px;
-  font-size: 15px;
+  width: 56px;
+  height: 34px;
+  font-size: 14px;
   text-align: center;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -123,8 +123,8 @@ body {
 #pageInput::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 select {
-  height: 42px;
-  font-size: 15px;
+  height: 34px;
+  font-size: 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-input);
@@ -135,8 +135,8 @@ select {
 }
 
 #annotColor {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   padding: 2px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -161,8 +161,8 @@ select {
   background: transparent;
   color: var(--fg);
   outline: none;
-  height: 40px;
-  font-size: 15px;
+  height: 32px;
+  font-size: 14px;
 }
 #searchStatus { color: var(--fg-muted); font-size: 12px; white-space: nowrap; }
 

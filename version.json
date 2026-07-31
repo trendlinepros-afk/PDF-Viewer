@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "released": "2026-07-31",
-  "notes": "Ctrl+Z undo/redo for annotations, AI Summary powered by Gemini with settings menu and secure API key storage, larger toolbar."
+  "notes": "Refined toolbar sizing."
 }
