@@ -122,6 +122,12 @@
       <button class="tb-btn" id="btnPresent" title="Presentation mode (F5)">
         <svg viewBox="0 0 24 24"><path d="M4 4h16v12H4zM12 16v4m-4 0h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
       </button>
+      <button class="tb-btn" id="btnAiSummary" title="AI Summary (Gemini)">
+        <svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16z" fill="currentColor"/></svg>
+      </button>
+      <button class="tb-btn" id="btnSettings" title="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
       <button class="tb-btn" id="btnProps" title="Document properties (Ctrl+I)">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
@@ -193,6 +199,7 @@
       <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save / download</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Print</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Find in document</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Undo / redo annotation</td></tr>
       <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Previous / next page</td></tr>
       <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last page</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd></td><td>Zoom in / out</td></tr>
@@ -204,6 +211,45 @@
       <tr><td><kbd>?</kbd></td><td>This help</td></tr>
     </table>
     <div class="dialog-actions"><button class="primary-btn" id="btnShortcutsClose">Close</button></div>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <h2>Settings</h2>
+    <div class="settings-row">
+      <label for="setTheme">Theme</label>
+      <select id="setTheme">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label for="setModel">AI model</label>
+      <select id="setModel">
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash (fast)</option>
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro (highest quality)</option>
+      </select>
+    </div>
+    <div class="settings-block">
+      <label for="apiKeyInput">Gemini API key</label>
+      <p class="api-status" id="apiKeyStatus"></p>
+      <div class="api-row">
+        <input type="password" id="apiKeyInput" placeholder="Paste API key…" autocomplete="off">
+        <button class="primary-btn" id="btnApiSave">Save</button>
+        <button class="ghost-btn" id="btnApiRemove">Remove</button>
+      </div>
+      <p class="settings-hint">Get a free key at aistudio.google.com/apikey. The key is stored
+        only on this device and is never displayed again after saving.</p>
+    </div>
+    <div class="dialog-actions"><button class="primary-btn" id="btnSettingsClose">Close</button></div>
+  </dialog>
+
+  <dialog id="aiDialog">
+    <h2>AI Summary</h2>
+    <div class="ai-content" id="aiContent"></div>
+    <div class="dialog-actions">
+      <button class="ghost-btn" id="btnAiRegen">Regenerate</button>
+      <button class="primary-btn" id="btnAiClose">Close</button>
+    </div>
   </dialog>
 
   <!-- Note popup template lives in JS -->

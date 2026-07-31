@@ -39,6 +39,7 @@ Installers are built automatically by GitHub Actions
 - **Highlight** text in any color
 - **Freehand drawing** (pen tool)
 - **Sticky notes** with editable pop-up text
+- **Undo / redo** for all annotation actions (`Ctrl+Z` / `Ctrl+Y`)
 - Comments panel listing every annotation, with jump-to and delete
 - Annotations **persist automatically** (per document, stored locally in your browser)
 - Hand tool for drag-to-pan
@@ -48,6 +49,14 @@ Installers are built automatically by GitHub Actions
 - **Save / download** a copy (`Ctrl+S`)
 - **Document properties** dialog: title, author, creation date, producer,
   PDF version, page count, file size (`Ctrl+I`)
+
+### AI
+- **AI Summary** — one click summarizes the open document using Google Gemini
+  (overview, key points, action items). Bring your own free API key from
+  aistudio.google.com/apikey.
+- **Settings menu** (top right) manages theme, AI model, and the API key —
+  the key is stored only on your device and is never displayed after saving,
+  but can be replaced or removed at any time.
 
 ### Interface
 - **Light / dark mode** toggle (remembers your choice, follows system preference by default)

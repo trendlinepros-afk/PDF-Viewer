@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "released": "2026-07-31",
-  "notes": "Auto-update support: the app downloads new versions and offers to close and reopen to install."
+  "notes": "Ctrl+Z undo/redo for annotations, AI Summary powered by Gemini with settings menu and secure API key storage, larger toolbar."
 }

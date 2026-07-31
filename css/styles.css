@@ -4,7 +4,7 @@
   --accent-hover: #1c7ed6;
   --danger: #c92a2a;
   --radius: 6px;
-  --toolbar-h: 48px;
+  --toolbar-h: 92px;
   --statusbar-h: 34px;
   --sidebar-w: 220px;
   font-size: 14px;
@@ -62,8 +62,8 @@ body {
   min-height: var(--toolbar-h);
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 0 12px;
   background: var(--bg-toolbar);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -73,15 +73,15 @@ body {
 }
 
 .toolbar-group { display: flex; align-items: center; gap: 2px; }
-.toolbar-sep { width: 1px; height: 24px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
+.toolbar-sep { width: 1px; height: 44px; background: var(--border); margin: 0 6px; flex-shrink: 0; }
 .toolbar-spacer { flex: 1; min-width: 8px; }
 
 .tb-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 54px;
+  height: 54px;
   padding: 0;
   border: none;
   border-radius: var(--radius);
@@ -93,9 +93,9 @@ body {
 .tb-btn:hover { background: var(--bg-hover); }
 .tb-btn.active { background: var(--bg-active); color: var(--accent); }
 .tb-btn:disabled { opacity: .4; cursor: default; background: transparent; }
-.tb-btn svg { width: 19px; height: 19px; }
-.tb-btn.small { width: 26px; height: 26px; }
-.tb-btn.small svg { width: 15px; height: 15px; }
+.tb-btn svg { width: 27px; height: 27px; }
+.tb-btn.small { width: 36px; height: 36px; }
+.tb-btn.small svg { width: 19px; height: 19px; }
 
 /* theme toggle shows only the icon for the mode you'd switch to */
 :root[data-theme="light"] .icon-sun { display: none; }
@@ -110,8 +110,9 @@ body {
 }
 
 #pageInput {
-  width: 48px;
-  height: 28px;
+  width: 64px;
+  height: 42px;
+  font-size: 15px;
   text-align: center;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -122,19 +123,20 @@ body {
 #pageInput::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 select {
-  height: 28px;
+  height: 42px;
+  font-size: 15px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-input);
   color: var(--fg);
   padding: 0 4px;
   cursor: pointer;
-  max-width: 130px;
+  max-width: 155px;
 }
 
 #annotColor {
-  width: 26px;
-  height: 26px;
+  width: 42px;
+  height: 42px;
   padding: 2px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -154,12 +156,13 @@ select {
 }
 .search-wrap.open { display: flex; }
 #searchInput {
-  width: 160px;
+  width: 200px;
   border: none;
   background: transparent;
   color: var(--fg);
   outline: none;
-  height: 26px;
+  height: 40px;
+  font-size: 15px;
 }
 #searchStatus { color: var(--fg-muted); font-size: 12px; white-space: nowrap; }
 
@@ -536,3 +539,53 @@ body.presenting .viewer-container { background: #000; }
 @media (max-width: 900px) {
   #viewModeSelect, .toolbar-sep { display: none; }
 }
+
+/* ==================== Settings & AI dialogs ==================== */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row label { color: var(--fg-muted); }
+.settings-block { padding: 10px 0 0; }
+.settings-block > label { color: var(--fg-muted); display: block; margin-bottom: 4px; }
+.api-status { margin: 2px 0 8px; font-size: 12px; color: var(--fg-muted); }
+.api-row { display: flex; gap: 6px; }
+.api-row input {
+  flex: 1;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  color: var(--fg);
+  padding: 0 8px;
+}
+.settings-hint { font-size: 11.5px; color: var(--fg-muted); margin: 8px 0 0; }
+.ghost-btn {
+  background: var(--bg-input);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ghost-btn:hover { background: var(--bg-hover); }
+.dialog-actions { gap: 8px; }
+
+.ai-content {
+  white-space: pre-wrap;
+  max-height: 55vh;
+  min-height: 60px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+#aiDialog { width: min(92vw, 560px); max-width: 560px; }

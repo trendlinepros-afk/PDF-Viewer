@@ -1,7 +1,7 @@
 /* PDF Viewer Pro — full-featured PDF viewer built on Mozilla PDF.js */
 'use strict';
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0';
 const REPO = 'trendlinepros-afk/PDF-Viewer';
 const RELEASES_API = `https://api.github.com/repos/${REPO}/releases/latest`;
 const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`;
@@ -149,6 +149,8 @@ async function loadDocument(bytes, name, size) {
   state.search = { query: '', pageCounts: [], total: 0, current: -1 };
   searchInput.value = '';
   searchStatus.textContent = '';
+  history.undo.length = 0;
+  history.redo.length = 0;
   loadAnnotations();
 
   welcome.classList.add('hidden');
@@ -744,6 +746,7 @@ function captureHighlight() {
     }
   }
   if (!byPage.size) return;
+  snapshot();
   for (const [page, pageRects] of byPage) {
     state.annotations.push({
       id: uid(), type: 'highlight', page,
@@ -809,6 +812,7 @@ function attachPageInteractions(wrap, pageNum) {
   wrap.addEventListener('pointerup', () => {
     if (!stroke) return;
     if (stroke.points.length > 1) {
+      snapshot();
       state.annotations.push(stroke);
       saveAnnotations();
       renderAnnotList();
@@ -831,6 +835,7 @@ function attachPageInteractions(wrap, pageNum) {
       color: annotColor.value, x: nx, y: ny, text: '',
       created: Date.now(),
     };
+    snapshot();
     state.annotations.push(note);
     saveAnnotations();
     redrawAnnotations(pageNum);
@@ -954,7 +959,9 @@ function openNotePopup(wrap, note) {
   layer.appendChild(popup);
   ta.focus();
 
+  let snapped = false; // one undo step per editing session
   ta.addEventListener('input', () => {
+    if (!snapped) { snapshot(); snapped = true; }
     note.text = ta.value;
     saveAnnotations();
     renderAnnotList();
@@ -969,6 +976,7 @@ function openNotePopup(wrap, note) {
 function deleteAnnotation(id) {
   const idx = state.annotations.findIndex((a) => a.id === id);
   if (idx === -1) return;
+  snapshot();
   const [a] = state.annotations.splice(idx, 1);
   saveAnnotations();
   redrawAnnotations(a.page);
@@ -1016,6 +1024,37 @@ function renderAnnotList() {
     item.addEventListener('click', () => setCurrentPage(a.page));
     panel.appendChild(item);
   }
+}
+
+/* ==================== Undo / redo ==================== */
+const history = { undo: [], redo: [] };
+
+/* call BEFORE mutating state.annotations */
+function snapshot() {
+  history.undo.push(JSON.stringify(state.annotations));
+  if (history.undo.length > 50) history.undo.shift();
+  history.redo.length = 0;
+}
+
+function restoreAnnotations(json, pushTo) {
+  pushTo.push(JSON.stringify(state.annotations));
+  state.annotations = JSON.parse(json);
+  saveAnnotations();
+  document.querySelectorAll('.note-popup').forEach((p) => p.remove());
+  viewer.querySelectorAll('.page-wrap').forEach((w) => {
+    if (w.querySelector('.page-canvas')) renderAnnotationLayer(w, Number(w.dataset.page));
+  });
+  renderAnnotList();
+}
+
+function undoAnnotation() {
+  if (!history.undo.length) { toast('Nothing to undo'); return; }
+  restoreAnnotations(history.undo.pop(), history.redo);
+}
+
+function redoAnnotation() {
+  if (!history.redo.length) { toast('Nothing to redo'); return; }
+  restoreAnnotations(history.redo.pop(), history.undo);
 }
 
 /* persistence */
@@ -1252,6 +1291,13 @@ window.addEventListener('keydown', (e) => {
       case '-': e.preventDefault(); zoomStep(-1); return;
       case '0': e.preventDefault(); setZoom('page-width'); return;
       case 'i': e.preventDefault(); showProperties(); return;
+      case 'z':
+        // inside a text field the browser's own text undo should win
+        if (!inField) { e.preventDefault(); e.shiftKey ? redoAnnotation() : undoAnnotation(); }
+        return;
+      case 'y':
+        if (!inField) { e.preventDefault(); redoAnnotation(); }
+        return;
     }
     return;
   }
@@ -1285,6 +1331,128 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+/* ==================== Settings ==================== */
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem('pdfviewer-settings')) || {}; }
+  catch (_) { return {}; }
+}
+function saveSettings(patch) {
+  const s = { ...loadSettings(), ...patch };
+  localStorage.setItem('pdfviewer-settings', JSON.stringify(s));
+  return s;
+}
+
+function refreshApiKeyStatus() {
+  const has = !!loadSettings().geminiKey;
+  $('apiKeyStatus').textContent = has
+    ? 'An API key is saved on this device. For security it cannot be viewed — enter a new key below to replace it.'
+    : 'No API key set. Paste one below to enable AI Summary.';
+  $('btnApiRemove').style.display = has ? '' : 'none';
+}
+
+function openSettings() {
+  $('setTheme').value = document.documentElement.dataset.theme;
+  $('setModel').value = loadSettings().geminiModel || 'gemini-2.5-flash';
+  $('apiKeyInput').value = '';
+  refreshApiKeyStatus();
+  $('settingsDialog').showModal();
+}
+
+$('btnSettings').addEventListener('click', openSettings);
+$('btnSettingsClose').addEventListener('click', () => $('settingsDialog').close());
+$('setTheme').addEventListener('change', () => applyTheme($('setTheme').value));
+$('setModel').addEventListener('change', () => saveSettings({ geminiModel: $('setModel').value }));
+
+$('btnApiSave').addEventListener('click', () => {
+  const key = $('apiKeyInput').value.trim();
+  if (!key) { toast('Paste an API key first.', true); return; }
+  saveSettings({ geminiKey: key });
+  $('apiKeyInput').value = '';
+  refreshApiKeyStatus();
+  toast('API key saved');
+});
+$('btnApiRemove').addEventListener('click', () => {
+  saveSettings({ geminiKey: '' });
+  $('apiKeyInput').value = '';
+  refreshApiKeyStatus();
+  toast('API key removed');
+});
+
+/* ==================== AI Summary (Gemini) ==================== */
+$('btnAiSummary').addEventListener('click', generateAiSummary);
+$('btnAiRegen').addEventListener('click', generateAiSummary);
+$('btnAiClose').addEventListener('click', () => $('aiDialog').close());
+
+async function extractDocumentText(maxChars = 80000) {
+  const doc = state.pdfDoc;
+  let out = '';
+  for (let n = 1; n <= doc.numPages && out.length < maxChars; n++) {
+    const page = await doc.getPage(n);
+    const tc = await page.getTextContent();
+    out += `\n\n[Page ${n}]\n` + tc.items.map((i) => i.str).join(' ');
+  }
+  return { text: out.slice(0, maxChars), truncated: out.length > maxChars };
+}
+
+function buildSummaryPrompt(text, truncated) {
+  return 'You are summarizing a PDF document for its reader. Provide:\n' +
+    '1. A one-paragraph overview of what the document is.\n' +
+    '2. The key points as short bullets.\n' +
+    '3. Any action items, deadlines, dates, or amounts worth noting.\n' +
+    'Be concise and use plain text (no markdown symbols).' +
+    (truncated ? '\nNote: only the beginning of a long document is provided.' : '') +
+    '\n\nDocument text:\n' + text;
+}
+
+async function generateAiSummary() {
+  if (!state.pdfDoc) { toast('Open a PDF first.', true); return; }
+  const settings = loadSettings();
+  if (!settings.geminiKey) {
+    toast('Set your Gemini API key in Settings first.', true);
+    openSettings();
+    return;
+  }
+  const content = $('aiContent');
+  if (!$('aiDialog').open) $('aiDialog').showModal();
+  content.textContent = 'Reading document…';
+  try {
+    const { text, truncated } = await extractDocumentText();
+    if (!text.trim()) {
+      content.textContent = 'This document has no extractable text (it may be a scanned ' +
+        'image). AI Summary needs selectable text to work.';
+      return;
+    }
+    content.textContent = 'Asking Gemini for a summary…';
+    const model = settings.geminiModel || 'gemini-2.5-flash';
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(new Error('timed out')), 45000);
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': settings.geminiKey },
+        body: JSON.stringify({ contents: [{ parts: [{ text: buildSummaryPrompt(text, truncated) }] }] }),
+        signal: abort.signal,
+      }
+    ).finally(() => clearTimeout(timer));
+    if (!res.ok) {
+      let detail = 'HTTP ' + res.status;
+      try { detail = (await res.json()).error.message || detail; } catch (_) {}
+      throw new Error([400, 401, 403].includes(res.status)
+        ? `the API key was rejected (${detail}). Replace it in Settings.`
+        : detail);
+    }
+    const data = await res.json();
+    const summary = (((data.candidates || [])[0] || {}).content || {}).parts
+      ? data.candidates[0].content.parts.map((p) => p.text || '').join('')
+      : '';
+    if (!summary.trim()) throw new Error('Gemini returned an empty response.');
+    content.textContent = summary.trim();
+  } catch (err) {
+    content.textContent = 'Could not generate a summary: ' + err.message;
+  }
+}
+
 /* ==================== Electron desktop integration ==================== */
 if (window.electronAPI) {
   // files opened via Windows file association / "Open with" arrive from the main process
@@ -1309,6 +1477,10 @@ if (window.electronAPI) {
       case 'present': enterPresentation(); break;
       case 'shortcuts': $('shortcutsDialog').showModal(); break;
       case 'update': checkForUpdates(); break;
+      case 'undo': undoAnnotation(); break;
+      case 'redo': redoAnnotation(); break;
+      case 'ai-summary': generateAiSummary(); break;
+      case 'settings': openSettings(); break;
     }
   });
 }

@@ -133,10 +133,22 @@ function buildMenu() {
     {
       label: '&Edit',
       submenu: [
+        // no accelerators here: the renderer handles Ctrl+Z/Y itself so that
+        // native text undo still works inside note text fields
+        { label: 'Undo Annotation', click: () => menuSend('undo') },
+        { label: 'Redo Annotation', click: () => menuSend('redo') },
+        { type: 'separator' },
         { role: 'copy' },
         { role: 'selectAll' },
         { type: 'separator' },
         { label: 'Find…', accelerator: 'CmdOrCtrl+F', click: () => menuSend('find') },
+      ],
+    },
+    {
+      label: '&Tools',
+      submenu: [
+        { label: 'AI Summary…', click: () => menuSend('ai-summary') },
+        { label: 'Settings…', click: () => menuSend('settings') },
       ],
     },
     {
